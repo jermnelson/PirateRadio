@@ -29,14 +29,15 @@ class PirateRadio(object):
         self.play_stereo = kwargs.get("stereo", True)
         self.podcasts = pathlib.Path(
             kwargs.get("podcasts",
-            "/floyds-dreams-of-dylans/podcasts"))
+            "/home/pi/floyds-dreams-of-dylan/podcasts"))
         self.music_pipe_r, self.music_pipe_w = os.pipe()
         self.microphone_pipe_r, self.microphone_pipe_w = os.pipe()
         self.media_re = re.compile(".(aac|mp3|wav|flac|m4a|ogg|pls|m3u)$")
         self.pls_re = re.compile(".pls$")
 
     def __play_items__(self, podcast_path):
-        podcast = etree.parse(podcast_path)
+        with podcast_path.open() as f:
+            podcast = etree.parse(f.read())
         items = podcast.findall("rss:channel/rss:item", RSS)
         for item in items:
             print(f"{item.find('rss:title', RSS).text}")
@@ -62,6 +63,13 @@ class PirateRadio(object):
             self.play_songs()
             return 0
 
+    def daemonize(self):
+        fpid=os.fork()
+        if fpid!=0:
+            sys.exit(0)
+
+
+
     def build_items(podcast):
         if self.media_re.search(podcast.filename):
             yield podcast
@@ -74,11 +82,11 @@ class PirateRadio(object):
         print(f"Playing songs to frequency {self.frequency}")
         print(f"Shuffle is {self.on_off[self.shuffle]}")
         print(f"Repeat All is {self.on_off[self.repeat_all]}")
-        print(f"Stereo playback is {self.on_off[play_stereo]}")
+        print(f"Stereo playback is {self.on_off[self.play_stereo]}")
         if self.shuffle:
             random.shuffle(self.podcasts())
         with open(os.devnull, "w") as dev_null:
-            for podcast in self.podcasts():
+            for podcast in self.podcasts.iterdir():
                 self.__play_items__(podcast)
 
 
@@ -93,12 +101,7 @@ class PirateRadio(object):
 
 	
 
-def daemonize():
-    fpid=os.fork()
-    if fpid!=0:
-        sys.exit(0)
-
-
+    
 if __name__ == "__main__":
     pirate_radio = PirateRadio()
     pirate_radio.main()
