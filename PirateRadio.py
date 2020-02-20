@@ -29,7 +29,7 @@ class PirateRadio(object):
         self.play_stereo = kwargs.get("stereo", True)
         self.podcasts = pathlib.Path(
             kwargs.get("podcasts",
-            "/home/pi/floyds-dreams-of-dylan/podcasts"))
+            "/home/pi/Public/floyds-dreams-of-dylan/podcasts"))
         self.music_pipe_r, self.music_pipe_w = os.pipe()
         self.microphone_pipe_r, self.microphone_pipe_w = os.pipe()
         self.media_re = re.compile(".(aac|mp3|wav|flac|m4a|ogg|pls|m3u)$")
@@ -95,8 +95,8 @@ class PirateRadio(object):
             self.fm_process = subprocess.Popen(
                     ["/root/pifm",
                      "-",str(self.frequency),
-                     "44100", "stereo" if play_stereo else "mono"], 
-                    stdin=music_pipe_r, 
+                     "44100", "stereo" if self.play_stereo else "mono"], 
+                    stdin=self.music_pipe_r, 
                     stdout=dev_null)
 
 	
